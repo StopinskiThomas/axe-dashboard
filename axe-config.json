@@ -1,0 +1,45 @@
+{
+  "runOnly": {
+    "type": "tag",
+    "values": [
+      "wcag2aa",
+      "best-practice"
+    ]
+  },
+  "rules": {
+    "accesskeys": {
+      "enabled": false
+    },
+    "aria-allowed-attr": {
+      "enabled": false
+    },
+    "aria-hidden-body": {
+      "enabled": false
+    },
+    "button-name": {
+      "enabled": false
+    },
+    "document-title": {
+      "enabled": false
+    },
+    "html-has-lang": {
+      "enabled": false
+    },
+    "image-alt": {
+      "enabled": false
+    },
+    "link-name": {
+      "enabled": false
+    },
+    "list": {
+      "enabled": false
+    },
+    "meta-viewport": {
+      "enabled": false
+    }
+  },
+  "resultTypes": [
+    "inapplicable"
+  ],
+  "iframes": true
+}

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>Axe Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <header class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Axe Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" href="#" id="nav-dashboard" role="tab" aria-selected="true">Dashboard</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" href="#" id="nav-history" role="tab" aria-selected="false">History</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" href="#" id="nav-config" role="tab" aria-selected="false">Configuration</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mt-4">
+        <!-- Announcer for screen readers -->
+        <div id="announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="h2">Run Accessibility Test</h1>
+                    <form id="axe-form">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">URL to Test</label>
+                            <input type="url" class="form-control" id="url" placeholder="https://example.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Run Test</button>
+                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#manual-config-modal">Configure</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Manual Config Modal -->
+            <div class="modal fade" id="manual-config-modal" tabindex="-1" aria-labelledby="manual-config-modal-label" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="manual-config-modal-label">Axe-Core Configuration (for this scan)</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="axe-config-form-manual">
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Run Only</strong></label>
+                                    <div class="form-text">Select which tags or rules to run. If none are selected, all rules will run.</div>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="wcag2a" id="manual-tag-wcag2a">
+                                            <label class="form-check-label" for="manual-tag-wcag2a">WCAG 2.0 A</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="wcag2aa" id="manual-tag-wcag2aa">
+                                            <label class="form-check-label" for="manual-tag-wcag2aa">WCAG 2.0 AA</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="best-practice" id="manual-tag-best-practice">
+                                            <label class="form-check-label" for="manual-tag-best-practice">Best Practices</label>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label for="manual-rules-to-run" class="form-label">Specific Rules (comma-separated)</label>
+                                        <input type="text" class="form-control" id="manual-rules-to-run" placeholder="e.g., color-contrast,link-name">
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Rules</strong></label>
+                                    <div class="form-text">Enable or disable specific rules.</div>
+                                    <div class="mt-2">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="accesskeys" id="manual-rule-accesskeys">
+                                                    <label class="form-check-label" for="manual-rule-accesskeys">accesskeys</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="aria-allowed-attr" id="manual-rule-aria-allowed-attr">
+                                                    <label class="form-check-label" for="manual-rule-aria-allowed-attr">aria-allowed-attr</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="aria-hidden-body" id="manual-rule-aria-hidden-body">
+                                                    <label class="form-check-label" for="manual-rule-aria-hidden-body">aria-hidden-body</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="button-name" id="manual-rule-button-name">
+                                                    <label class="form-check-label" for="manual-rule-button-name">button-name</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="document-title" id="manual-rule-document-title">
+                                                    <label class="form-check-label" for="manual-rule-document-title">document-title</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="html-has-lang" id="manual-rule-html-has-lang">
+                                                    <label class="form-check-label" for="manual-rule-html-has-lang">html-has-lang</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="image-alt" id="manual-rule-image-alt">
+                                                    <label class="form-check-label" for="manual-rule-image-alt">image-alt</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="link-name" id="manual-rule-link-name">
+                                                    <label class="form-check-label" for="manual-rule-link-name">link-name</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="list" id="manual-rule-list">
+                                                    <label class="form-check-label" for="manual-rule-list">list</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="meta-viewport" id="manual-rule-meta-viewport">
+                                                    <label class="form-check-label" for="manual-rule-meta-viewport">meta-viewport</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Result Types</strong></label>
+                                    <div class="form-text">Select which result types to include in the report.</div>
+                                    <div class="mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="violations" id="manual-result-violations">
+                                            <label class="form-check-label" for="manual-result-violations">Violations</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="passes" id="manual-result-passes">
+                                            <label class="form-check-label" for="manual-result-passes">Passes</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="incomplete" id="manual-result-incomplete">
+                                            <label class="form-check-label" for="manual-result-incomplete">Incomplete</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="inapplicable" id="manual-result-inapplicable">
+                                            <label class="form-check-label" for="manual-result-inapplicable">Inapplicable</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Other Options</strong></label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="true" id="manual-option-iframes">
+                                        <label class="form-check-label" for="manual-option-iframes">Test content within iframes</label>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="save-manual-config">Save Configuration</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h2 class="h3">Import Test Results</h2>
+                    <p class="card-text">Select a JSON file containing axe-core results to import it into the history.</p>
+                    <form id="import-form">
+                        <div class="mb-3">
+                            <label for="import-file" class="form-label">Axe-Core JSON File</label>
+                            <input class="form-control" type="file" id="import-file" accept=".json">
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Import Results</button>
+                    </form>
+                </div>
+            </div>
+            <div id="test-frame-container" style="display: none;"></div>
+        </div>
+
+        <!-- History View -->
+        <div id="history-view" style="display: none;" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h2">Test History</h1>
+                <div>
+                    <button id="export-json" class="btn btn-secondary">Export as JSON</button>
+                    <button id="clear-history" class="btn btn-danger">Clear History</button>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h3">Violations Over Time</h2>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="history-url-filter" class="form-label">Filter by URL</label>
+                            <select id="history-url-filter" class="form-select"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="history-time-filter" class="form-label">Filter by Time</label>
+                            <select id="history-time-filter" class="form-select">
+                                <option value="all">All Time</option>
+                                <option value="1h">Last Hour</option>
+                                <option value="6h">Last 6 Hours</option>
+                                <option value="12h">Last 12 Hours</option>
+                                <option value="1d">Last Day</option>
+                                <option value="3d">Last 3 Days</option>
+                                <option value="1w">Last Week</option>
+                                <option value="1m">Last Month</option>
+                                <option value="6m">Last 6 Months</option>
+                                <option value="1y">Last Year</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input" type="checkbox" id="toggle-violations" checked>
+                                <label class="form-check-label" for="toggle-violations">Violations</label>
+                            </div>
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input" type="checkbox" id="toggle-passes" checked>
+                                <label class="form-check-label" for="toggle-passes">Passes</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="toggle-incomplete">
+                                <label class="form-check-label" for="toggle-incomplete">Incomplete</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="history-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- Config View -->
+        <div id="config-view" style="display: none;" role="tabpanel">
+            <h1 class="h2">Configuration</h1>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h3">Manage Scheduled URLs</h2>
+                    <div class="mb-3">
+                        <label for="scheduled-url-select" class="form-label">Select a URL to configure</label>
+                        <select id="scheduled-url-select" class="form-select"></select>
+                    </div>
+                    <form id="config-form">
+                        <div class="input-group mb-3">
+                            <label for="new-scheduled-url" class="visually-hidden">Add New URL</label>
+                            <input type="url" class="form-control" id="new-scheduled-url" placeholder="https://example.com" required>
+                            <button class="btn btn-primary" type="submit">Add URL</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div id="scheduled-urls-list"></div>
+
+            <hr class="my-4">
+
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h3">Axe-Core Configuration</h2>
+                    <p class="card-text">Use the form below to configure the axe-core scanner. The settings will be applied to both manual and scheduled scans.</p>
+                    <form id="axe-config-form-gui">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Run Only</strong></label>
+                            <div class="form-text">Select which tags or rules to run. If none are selected, all rules will run.</div>
+                            <div class="mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="wcag2a" id="tag-wcag2a">
+                                    <label class="form-check-label" for="tag-wcag2a">WCAG 2.0 A</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="wcag2aa" id="tag-wcag2aa">
+                                    <label class="form-check-label" for="tag-wcag2aa">WCAG 2.0 AA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="best-practice" id="tag-best-practice">
+                                    <label class="form-check-label" for="tag-best-practice">Best Practices</label>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label for="rules-to-run" class="form-label">Specific Rules (comma-separated)</label>
+                                <input type="text" class="form-control" id="rules-to-run" placeholder="e.g., color-contrast,link-name">
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Rules</strong></label>
+                            <div class="form-text">Enable or disable specific rules.</div>
+                            <div class="mt-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="accesskeys" id="rule-accesskeys">
+                                            <label class="form-check-label" for="rule-accesskeys">accesskeys</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="aria-allowed-attr" id="rule-aria-allowed-attr">
+                                            <label class="form-check-label" for="rule-aria-allowed-attr">aria-allowed-attr</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="aria-hidden-body" id="rule-aria-hidden-body">
+                                            <label class="form-check-label" for="rule-aria-hidden-body">aria-hidden-body</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="button-name" id="rule-button-name">
+                                            <label class="form-check-label" for="rule-button-name">button-name</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="document-title" id="rule-document-title">
+                                            <label class="form-check-label" for="rule-document-title">document-title</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="html-has-lang" id="rule-html-has-lang">
+                                            <label class="form-check-label" for="rule-html-has-lang">html-has-lang</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="image-alt" id="rule-image-alt">
+                                            <label class="form-check-label" for="rule-image-alt">image-alt</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="link-name" id="rule-link-name">
+                                            <label class="form-check-label" for="rule-link-name">link-name</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="list" id="rule-list">
+                                            <label class="form-check-label" for="rule-list">list</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="meta-viewport" id="rule-meta-viewport">
+                                            <label class="form-check-label" for="rule-meta-viewport">meta-viewport</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Result Types</strong></label>
+                            <div class="form-text">Select which result types to include in the report.</div>
+                            <div class="mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="violations" id="result-violations">
+                                    <label class="form-check-label" for="result-violations">Violations</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="passes" id="result-passes">
+                                    <label class="form-check-label" for="result-passes">Passes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="incomplete" id="result-incomplete">
+                                    <label class="form-check-label" for="result-incomplete">Incomplete</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="inapplicable" id="result-inapplicable">
+                                    <label class="form-check-label" for="result-inapplicable">Inapplicable</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Other Options</strong></label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="true" id="option-iframes">
+                                <label class="form-check-label" for="option-iframes">Test content within iframes</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results View -->
+        <div id="results-view" class="mt-4" style="display: none;">
+            <h1 class="h2">Test Results</h1>
+            <div id="results-summary"></div>
+            <div id="results-details" class="accordion mt-3"></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.4.1/axe.min.js"></script>
+    <script src="url-util.js"></script>
+    <script src="chart-util.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
