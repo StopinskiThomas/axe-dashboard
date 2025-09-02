@@ -222,6 +222,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 details.innerHTML += createAccordionItem('pass', index, pass);
             });
         }
+
+        if (results.incomplete.length > 0) {
+            details.innerHTML += '<h2 class="mt-4">Incomplete</h2>';
+            results.incomplete.forEach((item, index) => {
+                details.innerHTML += createAccordionItem('incomplete', index, item);
+            });
+        }
     }
 
     function createAccordionItem(type, index, item) {
@@ -237,7 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${itemType}" aria-expanded="false" aria-controls="collapse-${itemType}">
                         ${item.help}
                     </button>
-                </h2>
+                </h3>
                 <div id="collapse-${itemType}" class="accordion-collapse collapse" aria-labelledby="heading-${itemType}">
                     <div class="accordion-body">
                         <p><strong>Description:</strong> ${item.description}</p>
@@ -594,16 +601,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error('Failed to save the configuration.');
                 }
                 announce('Default Axe configuration saved successfully!');
-            } catch (error) {
-                console.error('Error saving Axe config:', error);
-                alert('Error saving Axe configuration. See console for details.');
-            }
-        }
-    });
-
-    showView(dashboardView);
-});
-e configuration saved successfully!');
             } catch (error) {
                 console.error('Error saving Axe config:', error);
                 alert('Error saving Axe configuration. See console for details.');
