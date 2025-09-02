@@ -86,9 +86,17 @@ const getResultById = (id) => {
         const query = `SELECT result_json FROM results WHERE id = ?`;
         db.get(query, [id], (err, row) => {
             if (err) {
-                reject(err);
+                return reject(err);
             }
-            resolve(row ? JSON.parse(row.result_json) : null);
+            if (!row) {
+                return resolve(null);
+            }
+            try {
+                resolve(JSON.parse(row.result_json));
+            } catch (e) {
+                console.error(`Error parsing result_json for id ${id}:`, e);
+                reject(e);
+            }
         });
     });
 };
@@ -125,31 +133,31 @@ const getAllScheduledUrls = () => {
         const query = `SELECT id, url, config_json FROM scheduled_urls ORDER BY id DESC`;
         db.all(query, [], (err, rows) => {
             if (err) {
-                reject(err);
-            } else {
-                if (!rows) {
-                    resolve([]);
-                } else {
-                    try {
-                        const urls = rows.map(row => {
-                            let config = {};
-                            if (row.config_json) {
-                                try {
-                                    config = JSON.parse(row.config_json);
-                                } catch (e) {
-                                    console.error(`Error parsing config for URL id ${row.id}:`, e);
-                                }
-                            }
-                            return {
-                                ...row,
-                                config: config,
-                            };
-                        });
-                        resolve(urls);
-                    } catch (e) {
-                        reject(e);
+                return reject(err);
+            }
+            if (!rows) {
+                return resolve([]);
+            }
+            try {
+                const urls = rows.map(row => {
+                    let config = {};
+                    if (row.config_json) {
+                        try {
+                            config = JSON.parse(row.config_json);
+                        } catch (e) {
+                            console.error(`Error parsing config for URL id ${row.id}:`, e);
+                            // If config is invalid, proceed with an empty config object
+                        }
                     }
-                }
+                    return {
+                        id: row.id,
+                        url: row.url,
+                        config: config,
+                    };
+                });
+                resolve(urls);
+            } catch (e) {
+                reject(e);
             }
         });
     });

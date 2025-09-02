@@ -207,58 +207,86 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
 
         const details = document.getElementById('results-details');
-        details.innerHTML = '';
+        details.innerHTML = ''; // Clear previous results
 
-        if (results.violations.length > 0) {
-            details.innerHTML += '<h2>Violations</h2>';
-            results.violations.forEach((violation, index) => {
-                details.innerHTML += createAccordionItem('violation', index, violation);
-            });
-        }
+        const createSection = (title, items, type) => {
+            if (items.length > 0) {
+                const heading = document.createElement('h2');
+                heading.textContent = title;
+                if (details.children.length > 0) {
+                    heading.className = 'mt-4';
+                }
+                details.appendChild(heading);
+                items.forEach((item, index) => {
+                    details.appendChild(createAccordionItem(type, index, item));
+                });
+            }
+        };
 
-        if (results.passes.length > 0) {
-            details.innerHTML += '<h2 class="mt-4">Passes</h2>';
-            results.passes.forEach((pass, index) => {
-                details.innerHTML += createAccordionItem('pass', index, pass);
-            });
-        }
-
-        if (results.incomplete.length > 0) {
-            details.innerHTML += '<h2 class="mt-4">Incomplete</h2>';
-            results.incomplete.forEach((item, index) => {
-                details.innerHTML += createAccordionItem('incomplete', index, item);
-            });
-        }
+        createSection('Violations', results.violations, 'violation');
+        createSection('Passes', results.passes, 'pass');
+        createSection('Incomplete', results.incomplete, 'incomplete');
     }
 
     function createAccordionItem(type, index, item) {
-        const itemType = type + '-' + index;
-        let impactHtml = '';
+        const itemType = `${type}-${index}`;
+
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'accordion-item';
+
+        const header = document.createElement('h3');
+        header.className = 'accordion-header';
+        header.id = `heading-${itemType}`;
+
+        const button = document.createElement('button');
+        button.className = 'accordion-button collapsed';
+        button.type = 'button';
+        button.dataset.bsToggle = 'collapse';
+        button.dataset.bsTarget = `#collapse-${itemType}`;
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', `collapse-${itemType}`);
+        button.textContent = item.help;
+        header.appendChild(button);
+
+        const collapseContainer = document.createElement('div');
+        collapseContainer.id = `collapse-${itemType}`;
+        collapseContainer.className = 'accordion-collapse collapse';
+        collapseContainer.setAttribute('aria-labelledby', `heading-${itemType}`);
+
+        const accordionBody = document.createElement('div');
+        accordionBody.className = 'accordion-body';
+
+        const createParagraph = (html) => {
+            const p = document.createElement('p');
+            p.innerHTML = html;
+            return p;
+        };
+
+        accordionBody.appendChild(createParagraph(`<strong>Description:</strong> ${item.description}`));
+        accordionBody.appendChild(createParagraph(`<strong>Help URL:</strong> <a href="${item.helpUrl}" target="_blank">${item.helpUrl}</a>`));
+
         if (item.impact) {
-            impactHtml = `<p><strong>Impact:</strong> ${item.impact}</p>`;
+            accordionBody.appendChild(createParagraph(`<strong>Impact:</strong> ${item.impact}`));
         }
 
-        return `
-            <div class="accordion-item">
-                <h3 class="accordion-header" id="heading-${itemType}">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${itemType}" aria-expanded="false" aria-controls="collapse-${itemType}">
-                        ${item.help}
-                    </button>
-                </h3>
-                <div id="collapse-${itemType}" class="accordion-collapse collapse" aria-labelledby="heading-${itemType}">
-                    <div class="accordion-body">
-                        <p><strong>Description:</strong> ${item.description}</p>
-                        <p><strong>Help URL:</strong> <a href="${item.helpUrl}" target="_blank">${item.helpUrl}</a></p>
-                        ${impactHtml}
-                        <p><strong>Tags:</strong> ${item.tags.join(', ')}</p>
-                        <p><strong>Nodes:</strong></p>
-                        <ul>
-                            ${item.nodes.map(node => `<li><code>${node.html}</code></li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        `;
+        accordionBody.appendChild(createParagraph(`<strong>Tags:</strong> ${item.tags.join(', ')}`));
+        accordionBody.appendChild(createParagraph('<strong>Nodes:</strong>'));
+
+        const nodesList = document.createElement('ul');
+        item.nodes.forEach(node => {
+            const listItem = document.createElement('li');
+            const code = document.createElement('code');
+            code.textContent = node.html; // This is the safe part
+            listItem.appendChild(code);
+            nodesList.appendChild(listItem);
+        });
+        accordionBody.appendChild(nodesList);
+
+        collapseContainer.appendChild(accordionBody);
+        accordionItem.appendChild(header);
+        accordionItem.appendChild(collapseContainer);
+
+        return accordionItem;
     }
 
     async function loadHistory() {
