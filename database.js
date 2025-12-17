@@ -45,6 +45,38 @@ const initDb = () => {
                 }
             });
         });
+        db.run(`
+            CREATE TABLE IF NOT EXISTS pa11y_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+                timestamp DATETIME NOT NULL,
+                issues INTEGER NOT NULL,
+                result_json TEXT NOT NULL
+            )
+        `);
+
+        db.run(`
+            CREATE TABLE IF NOT EXISTS scheduler_settings (
+                id INTEGER PRIMARY KEY,
+                enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                cron TEXT NOT NULL DEFAULT '0 2 * * *'
+            )
+        `, (err) => {
+            if (err) {
+                console.error("Error creating scheduler_settings table:", err);
+                return;
+            }
+            // Check if the table is empty and insert a default row if it is
+            db.get("SELECT COUNT(*) as count FROM scheduler_settings", (err, row) => {
+                if (err) {
+                    console.error("Error checking scheduler_settings count:", err);
+                    return;
+                }
+                if (row.count === 0) {
+                    db.run("INSERT INTO scheduler_settings (id, enabled, cron) VALUES (1, 1, '0 2 * * *')");
+                }
+            });
+        });
     });
 };
 
@@ -81,7 +113,24 @@ const getAllResults = () => {
     });
 };
 
-const getResultById = (id) => {
+const addPa11yResult = (result) => {
+    return new Promise((resolve, reject) => {
+        const { pageUrl, issues } = result;
+        const resultJson = JSON.stringify(result);
+        const stmt = `INSERT INTO pa11y_results (url, timestamp, issues, result_json) VALUES (?, ?, ?, ?)`;
+
+        const issueCount = issues ? issues.length : 0;
+
+        db.run(stmt, [pageUrl, new Date().toISOString(), issueCount, resultJson], function(err) {
+            if (err) {
+                console.error('DB Error on insert:', err.message);
+                reject(err);
+            } else {
+                resolve({ id: this.lastID });
+            }
+        });
+    });
+};
     return new Promise((resolve, reject) => {
         const query = `SELECT result_json FROM results WHERE id = ?`;
         db.get(query, [id], (err, row) => {
@@ -177,4 +226,29 @@ const updateScheduledUrlConfig = (id, config) => {
     });
 };
 
-module.exports = { db, initDb, addResult, getAllResults, getResultById, addScheduledUrl, removeScheduledUrl, getAllScheduledUrls, updateScheduledUrlConfig };
+const getSchedulerSettings = () => {
+    return new Promise((resolve, reject) => {
+        db.get("SELECT * FROM scheduler_settings WHERE id = 1", (err, row) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(row);
+        });
+    });
+};
+
+const updateSchedulerSettings = (settings) => {
+    return new Promise((resolve, reject) => {
+        const { enabled, cron } = settings;
+        const stmt = `UPDATE scheduler_settings SET enabled = ?, cron = ? WHERE id = 1`;
+        db.run(stmt, [enabled, cron], function(err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve({ changes: this.changes });
+            }
+        });
+    });
+};
+
+module.exports = { db, initDb, addResult, getAllResults, getResultById, addScheduledUrl, removeScheduledUrl, getAllScheduledUrls, updateScheduledUrlConfig, getSchedulerSettings, updateSchedulerSettings };

@@ -1,13 +1,22 @@
 document.addEventListener('DOMContentLoaded', async () => {
     let allHistoryResults = []; // Define at a higher scope
 
-    const navDashboard = document.getElementById('nav-dashboard');
+    // Navigation Links
+    const navNewScan = document.getElementById('nav-new-scan');
     const navHistory = document.getElementById('nav-history');
-    const navConfig = document.getElementById('nav-config');
-    const dashboardView = document.getElementById('dashboard-view');
+    const navScheduledScans = document.getElementById('nav-scheduled-scans');
+    const navImportExport = document.getElementById('nav-import-export');
+    const navSettings = document.getElementById('nav-settings');
+
+    // Views
+    const newScanView = document.getElementById('new-scan-view');
     const historyView = document.getElementById('history-view');
+    const scheduledScansView = document.getElementById('scheduled-scans-view');
+    const importExportView = document.getElementById('import-export-view');
+    const settingsView = document.getElementById('settings-view');
     const resultsView = document.getElementById('results-view');
-    const configView = document.getElementById('config-view');
+
+    // Form and Filter Elements
     const axeForm = document.getElementById('axe-form');
     const historyList = document.getElementById('history-list');
     const historyUrlFilter = document.getElementById('history-url-filter');
@@ -15,7 +24,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toggleViolations = document.getElementById('toggle-violations');
     const togglePasses = document.getElementById('toggle-passes');
     const toggleIncomplete = document.getElementById('toggle-incomplete');
+    const configForm = document.getElementById('config-form');
+    const newScheduledUrlInput = document.getElementById('new-scheduled-url');
+    const scheduledUrlsList = document.getElementById('scheduled-urls-list');
+    const axeConfigFormGui = document.getElementById('axe-config-form-gui');
+    const scheduledUrlSelect = document.getElementById('scheduled-url-select');
+    const schedulerSettingsForm = document.getElementById('scheduler-settings-form');
+    const schedulerEnabled = document.getElementById('scheduler-enabled');
+    const schedulerFrequency = document.getElementById('scheduler-frequency');
+    const schedulerWeeklyDayContainer = document.getElementById('scheduler-weekly-day-container');
+    const schedulerWeeklyDay = document.getElementById('scheduler-weekly-day');
+    const schedulerMonthlyDayContainer = document.getElementById('scheduler-monthly-day-container');
+    const schedulerMonthlyDay = document.getElementById('scheduler-monthly-day');
+    const schedulerTime = document.getElementById('scheduler-time');
+    const pa11yForm = document.getElementById('pa11y-form');
+    const pa11yUrl = document.getElementById('pa11y-url');
+    const pa11yResultsView = document.getElementById('pa11y-results-view');
+    const pa11yResultsSummary = document.getElementById('pa11y-results-summary');
+    const pa11yResultsDetails = document.getElementById('pa11y-results-details');
+
+    // Announcer for screen readers
     const announcer = document.getElementById('announcer');
+
+    // Collections for easier management
+    const allViews = [newScanView, historyView, scheduledScansView, importExportView, settingsView, resultsView, pa11yResultsView];
+    const allNavLinks = [navNewScan, navHistory, navScheduledScans, navImportExport, navSettings];
 
     await loadHistory();
 
@@ -26,35 +59,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3000);
     }
 
-    function showView(view) {
-        // Hide all views
-        dashboardView.style.display = 'none';
-        historyView.style.display = 'none';
-        resultsView.style.display = 'none';
-        configView.style.display = 'none';
+    function showView(viewToShow) {
+        allViews.forEach(view => {
+            if(view) view.style.display = 'none';
+        });
+        allNavLinks.forEach(link => {
+            if(link) {
+                link.classList.remove('active');
+                link.setAttribute('aria-selected', 'false');
+            }
+        });
 
-        // De-select all tabs
-        navDashboard.classList.remove('active');
-        navHistory.classList.remove('active');
-        navConfig.classList.remove('active');
-        navDashboard.setAttribute('aria-selected', 'false');
-        navHistory.setAttribute('aria-selected', 'false');
-        navConfig.setAttribute('aria-selected', 'false');
+        if (viewToShow) {
+            viewToShow.style.display = 'block';
+        }
 
-        // Show the selected view
-        view.style.display = 'block';
-
-        // Select the correct tab
         let activeTab;
-        if (view === dashboardView) activeTab = navDashboard;
-        if (view === historyView) activeTab = navHistory;
-        if (view === configView) activeTab = navConfig;
+        if (viewToShow === newScanView) activeTab = navNewScan;
+        if (viewToShow === historyView) activeTab = navHistory;
+        if (viewToShow === scheduledScansView) activeTab = navScheduledScans;
+        if (viewToShow === importExportView) activeTab = navImportExport;
+        if (viewToShow === settingsView) activeTab = navSettings;
 
         if (activeTab) {
             activeTab.classList.add('active');
             activeTab.setAttribute('aria-selected', 'true');
-            // Move focus to the main heading of the view
-            const heading = view.querySelector('h1, h2');
+            const heading = viewToShow.querySelector('h1, h2');
             if (heading) {
                 heading.setAttribute('tabindex', -1);
                 heading.focus();
@@ -62,22 +92,124 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    navDashboard.addEventListener('click', (e) => {
+    // --- Navigation Event Listeners ---
+    navNewScan.addEventListener('click', (e) => { e.preventDefault(); showView(newScanView); });
+    navHistory.addEventListener('click', (e) => { e.preventDefault(); showView(historyView); });
+    navScheduledScans.addEventListener('click', async (e) => {
         e.preventDefault();
-        showView(dashboardView);
+        showView(scheduledScansView);
+        try {
+            await loadScheduledUrls();
+        } catch (error) {
+            console.error("Error loading scheduled URLs data:", error);
+            alert("Could not load scheduled URLs. Please check the console for errors.");
+        }
+    });
+    navImportExport.addEventListener('click', (e) => { e.preventDefault(); showView(importExportView); });
+    navSettings.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showView(settingsView);
+        try {
+            await loadAxeConfig(); // Load default config initially
+            await loadSchedulerSettings();
+        } catch (error) {
+            console.error("Error loading configuration data:", error);
+            alert("Could not load configuration data. Please check the console for errors.");
+        }
     });
 
-    navHistory.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView(historyView);
-    });
 
+    // --- Scan Form Event Listeners ---
     axeForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const url = document.getElementById('url').value;
         runManualTest(url);
     });
 
+    const sitemapForm = document.getElementById('sitemap-form');
+    let sitemapPollInterval = null;
+
+    sitemapForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (sitemapPollInterval) {
+            clearInterval(sitemapPollInterval);
+        }
+
+        const sitemapUrl = document.getElementById('sitemap-url').value;
+        const progressContainer = document.getElementById('sitemap-progress-container');
+        const progressBar = document.getElementById('sitemap-progress-bar');
+        const statusText = document.getElementById('sitemap-status-text');
+
+        progressContainer.style.display = 'block';
+        statusText.textContent = 'Initiating sitemap scan...';
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', '0');
+
+        fetch('/api/scan/sitemap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: sitemapUrl })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.jobId) {
+                announce('Sitemap scan started. Progress is displayed below.');
+                pollSitemapStatus(data.jobId);
+            } else {
+                throw new Error(data.error || 'Failed to start scan.');
+            }
+        })
+        .catch(error => {
+            console.error('Error starting sitemap scan:', error);
+            statusText.textContent = `Error: ${error.message}`;
+            announce('Error starting sitemap scan. See console for details.');
+        });
+    });
+
+    function pollSitemapStatus(jobId) {
+        const progressContainer = document.getElementById('sitemap-progress-container');
+        const progressBar = document.getElementById('sitemap-progress-bar');
+        const statusText = document.getElementById('sitemap-status-text');
+
+        sitemapPollInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/scan/sitemap/status/${jobId}`);
+                if (!response.ok) {
+                    throw new Error('Could not retrieve scan status.');
+                }
+                const job = await response.json();
+
+                if (job.status === 'pending') {
+                    statusText.textContent = 'Waiting for scan to begin...';
+                } else if (job.status === 'in-progress') {
+                    const percentage = job.total > 0 ? Math.round((job.completed / job.total) * 100) : 0;
+                    progressBar.style.width = `${percentage}%`;
+                    progressBar.setAttribute('aria-valuenow', percentage);
+                    statusText.textContent = `Scanning ${job.completed} of ${job.total}: ${job.currentUrl}`;
+                } else if (job.status === 'completed') {
+                    clearInterval(sitemapPollInterval);
+                    progressBar.style.width = '100%';
+                    progressBar.setAttribute('aria-valuenow', '100');
+                    statusText.textContent = `Scan complete! Processed ${job.total} URLs.`;
+                    announce('Sitemap scan complete.');
+                    setTimeout(() => { progressContainer.style.display = 'none'; }, 10000);
+                } else if (job.status === 'error') {
+                    clearInterval(sitemapPollInterval);
+                    statusText.textContent = `Error: ${job.error}`;
+                    announce('An error occurred during the sitemap scan.');
+                }
+
+            } catch (error) {
+                clearInterval(sitemapPollInterval);
+                console.error('Error polling sitemap status:', error);
+                statusText.textContent = 'Error retrieving scan status.';
+            }
+        }, 2000);
+    }
+
+    // --- Manual Scan Logic ---
     let manualAxeConfig = {}; // To hold config for manual scans
 
     const manualConfigModal = document.getElementById('manual-config-modal');
@@ -98,7 +230,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const newConfig = {};
 
         // Handle Run Only
-        const tags = Array.from(document.querySelectorAll(`[id^=${prefix}tag-]:checked`)).map(cb => cb.value);
+        const tags = [];
+        const selectedWcag = document.querySelector(`input[name=${prefix}wcag-tag]:checked`);
+        if (selectedWcag) {
+            tags.push(selectedWcag.value);
+        }
+        if (document.getElementById(`${prefix}tag-best-practice`).checked) {
+            tags.push('best-practice');
+        }
+
         const rulesToRun = document.getElementById(`${prefix}rules-to-run`).value.split(',').map(s => s.trim()).filter(Boolean);
 
         if (rulesToRun.length > 0) {
@@ -196,6 +336,101 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // --- Pa11y Scan Logic ---
+    pa11yForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = pa11yUrl.value;
+        
+        try {
+            const response = await fetch('/api/scan/pa11y', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to run Pa11y scan.');
+            }
+
+            const results = await response.json();
+            renderPa11yResults(results);
+            showView(pa11yResultsView);
+            announce('Pa11y scan complete. Results are now displayed.');
+        } catch (error) {
+            console.error('Error running Pa11y scan:', error);
+            alert('Error running Pa11y scan. See console for details.');
+        }
+    });
+
+    function renderPa11yResults(results) {
+        pa11yResultsSummary.innerHTML = `
+            <p>URL: ${results.pageUrl}</p>
+            <p>Document Title: ${results.documentTitle}</p>
+        `;
+
+        pa11yResultsDetails.innerHTML = ''; // Clear previous results
+
+        if (results.issues.length > 0) {
+            const heading = document.createElement('h2');
+            heading.textContent = 'Issues';
+            pa11yResultsDetails.appendChild(heading);
+
+            results.issues.forEach((issue, index) => {
+                pa11yResultsDetails.appendChild(createPa11yAccordionItem('issue', index, issue));
+            });
+        } else {
+            pa11yResultsDetails.innerHTML = '<p>No issues found.</p>';
+        }
+    }
+
+    function createPa11yAccordionItem(type, index, item) {
+        const itemType = `${type}-${index}`;
+
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'accordion-item';
+
+        const header = document.createElement('h3');
+        header.className = 'accordion-header';
+        header.id = `heading-${itemType}`;
+
+        const button = document.createElement('button');
+        button.className = 'accordion-button collapsed';
+        button.type = 'button';
+        button.dataset.bsToggle = 'collapse';
+        button.dataset.bsTarget = `#collapse-${itemType}`;
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', `collapse-${itemType}`);
+        button.textContent = item.message;
+        header.appendChild(button);
+
+        const collapseContainer = document.createElement('div');
+        collapseContainer.id = `collapse-${itemType}`;
+        collapseContainer.className = 'accordion-collapse collapse';
+        collapseContainer.setAttribute('aria-labelledby', `heading-${itemType}`);
+
+        const accordionBody = document.createElement('div');
+        accordionBody.className = 'accordion-body';
+
+        const createParagraph = (html) => {
+            const p = document.createElement('p');
+            p.innerHTML = html;
+            return p;
+        };
+
+        accordionBody.appendChild(createParagraph(`<strong>Code:</strong> ${item.code}`));
+        accordionBody.appendChild(createParagraph(`<strong>Context:</strong> <code>${item.context}</code>`));
+        accordionBody.appendChild(createParagraph(`<strong>Selector:</strong> <code>${item.selector}</code>`));
+
+        collapseContainer.appendChild(accordionBody);
+        accordionItem.appendChild(header);
+        accordionItem.appendChild(collapseContainer);
+
+        return accordionItem;
+    }
+
+    // --- Results View Logic ---
     function renderResults(results) {
         const summary = document.getElementById('results-summary');
         summary.innerHTML = `
@@ -289,6 +524,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return accordionItem;
     }
 
+    // --- History View Logic ---
     async function loadHistory() {
         try {
             const response = await fetch('/api/results');
@@ -416,12 +652,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (showIncomplete) {
-            // Need to fetch full results to get incomplete count, as it's not in the summary
-            // This is a limitation of the current summary data. For now, we will use a placeholder.
-            // A proper fix would involve adding 'incomplete' to the summary data from the backend.
             datasets.push({
                 label: 'Incomplete',
-                data: filteredResults.map(r => r.incomplete || 0), // Assuming incomplete might not be in summary
+                data: filteredResults.map(r => r.incomplete || 0), 
                 borderColor: 'rgba(255, 206, 86, 1)',
                 backgroundColor: 'rgba(255, 206, 86, 0.2)',
                 borderWidth: 2,
@@ -433,23 +666,99 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderHistoryChart({ labels, datasets });
     }
 
-    // --- Config View Logic ---
-    const configForm = document.getElementById('config-form');
-    const newScheduledUrlInput = document.getElementById('new-scheduled-url');
-    const scheduledUrlsList = document.getElementById('scheduled-urls-list');
-    const axeConfigFormGui = document.getElementById('axe-config-form-gui');
+    // --- Scheduled Scans & Settings Logic ---
 
-    const scheduledUrlSelect = document.getElementById('scheduled-url-select');
-
-    navConfig.addEventListener('click', async (e) => {
-        e.preventDefault();
-        showView(configView);
+    async function loadSchedulerSettings() {
         try {
-            await loadScheduledUrls();
-            await loadAxeConfig(); // Load default config initially
+            const response = await fetch('/api/scheduler-settings');
+            if (!response.ok) {
+                throw new Error('Failed to load scheduler settings.');
+            }
+            const settings = await response.json();
+            schedulerEnabled.checked = settings.enabled;
+
+            const cronParts = settings.cron.split(' ');
+            const minute = cronParts[0];
+            const hour = cronParts[1];
+            const dayOfMonth = cronParts[2];
+            const month = cronParts[3];
+            const dayOfWeek = cronParts[4];
+
+            schedulerTime.value = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+
+            if (dayOfMonth === '*' && dayOfWeek === '*') {
+                schedulerFrequency.value = 'daily';
+            } else if (dayOfMonth === '*') {
+                schedulerFrequency.value = 'weekly';
+                schedulerWeeklyDay.value = dayOfWeek;
+            } else if (dayOfWeek === '*') {
+                schedulerFrequency.value = 'monthly';
+                schedulerMonthlyDay.value = dayOfMonth;
+            }
+
+            handleFrequencyChange();
+
         } catch (error) {
-            console.error("Error loading configuration data:", error);
-            alert("Could not load configuration data. Please check the console for errors.");
+            console.error('Error loading scheduler settings:', error);
+            alert('Could not load scheduler settings. Please check the console for errors.');
+        }
+    }
+
+    function handleFrequencyChange() {
+        const frequency = schedulerFrequency.value;
+        if (frequency === 'weekly') {
+            schedulerWeeklyDayContainer.style.display = 'block';
+            schedulerMonthlyDayContainer.style.display = 'none';
+        } else if (frequency === 'monthly') {
+            schedulerWeeklyDayContainer.style.display = 'none';
+            schedulerMonthlyDayContainer.style.display = 'block';
+        } else {
+            schedulerWeeklyDayContainer.style.display = 'none';
+            schedulerMonthlyDayContainer.style.display = 'none';
+        }
+    }
+
+    schedulerFrequency.addEventListener('change', handleFrequencyChange);
+
+    schedulerSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const [hour, minute] = schedulerTime.value.split(':');
+        let cron = '';
+
+        const frequency = schedulerFrequency.value;
+        if (frequency === 'daily') {
+            cron = `${minute} ${hour} * * *`;
+        } else if (frequency === 'weekly') {
+            const dayOfWeek = schedulerWeeklyDay.value;
+            cron = `${minute} ${hour} * * ${dayOfWeek}`;
+        } else if (frequency === 'monthly') {
+            const dayOfMonth = schedulerMonthlyDay.value;
+            cron = `${minute} ${hour} ${dayOfMonth} * *`;
+        }
+
+        const settings = {
+            enabled: schedulerEnabled.checked,
+            cron: cron
+        };
+
+        try {
+            const response = await fetch('/api/scheduler-settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save scheduler settings.');
+            }
+
+            announce('Scheduler settings saved successfully!');
+        } catch (error) {
+            console.error('Error saving scheduler settings:', error);
+            alert('Error saving scheduler settings. See console for details.');
         }
     });
 
@@ -558,8 +867,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Populate Run Only
         if (config.runOnly && config.runOnly.type === 'tag') {
             config.runOnly.values.forEach(tag => {
+                const radio = document.querySelector(`input[name=${prefix}wcag-tag][value=${tag}]`);
+                if (radio) {
+                    radio.checked = true;
+                }
                 const checkbox = document.getElementById(`${prefix}tag-${tag}`);
-                if (checkbox) checkbox.checked = true;
+                if (checkbox && checkbox.type === 'checkbox') {
+                    checkbox.checked = true;
+                }
             });
         }
         if (config.runOnly && config.runOnly.type === 'rule') {
@@ -636,5 +951,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    showView(dashboardView);
+    // --- Initial Load ---
+    showView(newScanView);
 });
